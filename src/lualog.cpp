@@ -39,7 +39,10 @@ int close(lua_State* L)
 int filter(lua_State* L)
 {
 	auto log_filter = log_service::default_instance()->get_filter();
-	log_filter->filter((log_level)lua_tointeger(L, 1), lua_toboolean(L, 2));
+	if(log_filter)
+	{
+		log_filter->filter((log_level)lua_tointeger(L, 1), lua_toboolean(L, 2));
+	}
 	return 0;
 }
 
@@ -53,7 +56,12 @@ int daemon(lua_State* L)
 int is_filter(lua_State* L)
 {
 	auto log_filter = log_service::default_instance()->get_filter();
-	lua_pushboolean(L, log_filter->is_filter((log_level)lua_tointeger(L, 1)));
+	if(log_filter)
+	{
+		lua_pushboolean(L, log_filter->is_filter((log_level)lua_tointeger(L, 1)));
+		return 1;
+	}
+	lua_pushboolean(L, false);
 	return 1;
 }
 
@@ -120,9 +128,24 @@ int log(lua_State* L)
 		line = (int)lua_tointeger(L, 3);
 	}
 	auto service = log_service::default_instance();
-	log_ctx<level> ctx(service, source, line);
-	ctx << log_msg;
-	return 0;
+	auto log_filter = log_service::default_instance()->get_filter();
+	if(log_filter)
+	{
+        bool filter = log_filter->is_filter(level);
+		if (!filter)
+		{
+			log_ctx<level> ctx(service, source, line);
+			ctx << log_msg;
+		}
+		lua_pushboolean(L, filter);
+	} 
+	else
+	{
+		log_ctx<level> ctx(service, source, line);
+		ctx << log_msg;
+		lua_pushboolean(L, true);
+	}
+	return 1;
 }
 
 void lua_register_function(lua_State* L, const char name[], lua_CFunction func)
@@ -148,5 +171,6 @@ extern "C" LLOG_API int luaopen_lualog(lua_State* L)
 	lua_register_function(L, "warn", log<log_level::LOG_LEVEL_WARN>);
 	lua_register_function(L, "dump", log<log_level::LOG_LEVEL_DUMP>);
 	lua_register_function(L, "error", log<log_level::LOG_LEVEL_ERROR>);
+	lua_register_function(L, "fatal", log<log_level::LOG_LEVEL_FATAL>);
 	return 1;
 }
