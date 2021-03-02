@@ -10,7 +10,7 @@ c++和lua通用的日志库，需要C++17支持
 - c++17
 
 # lua使用方法
-```
+```lua
 local llog = require("lualog")
 
 llog.init("./newlog/", "qtest", 0, 500000)
