@@ -1,6 +1,8 @@
 #include "logger.h"
 #include "lua.hpp"
 
+using namespace logger
+
 #ifdef _MSC_VER
 #define LLOG_API _declspec(dllexport)
 #else
@@ -126,26 +128,11 @@ int log(lua_State* L)
 	{
 		source = lua_tostring(L, 2);
 		line = (int)lua_tointeger(L, 3);
-	}
-	auto service = log_service::default_instance();
-	auto log_filter = log_service::default_instance()->get_filter();
-	if(log_filter)
-	{
-        bool filter = log_filter->is_filter(level);
-		if (!filter)
-		{
-			log_ctx<level> ctx(service, source, line);
-			ctx << log_msg;
-		}
-		lua_pushboolean(L, filter);
-	} 
-	else
-	{
-		log_ctx<level> ctx(service, source, line);
-		ctx << log_msg;
-		lua_pushboolean(L, true);
-	}
-	return 1;
+    }
+    logger_output<level>(source.c_str(), line) << log_msg;
+    auto log_filter = log_service::default_instance()->get_filter();
+    lua_pushboolean(L, log_filter ? log_filter->is_filter(level) : true);
+    return 1;
 }
 
 void lua_register_function(lua_State* L, const char name[], lua_CFunction func)

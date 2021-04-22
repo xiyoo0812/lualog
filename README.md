@@ -1,19 +1,26 @@
 # lualog
-c++和lua通用的日志库，需要C++17支持
+c++和lua通用的多线程日志库，需要C++17支持
 
 # 编译
 - msvc : 准备好lua依赖库并放到指定位置，将proj文件加到sln后编译。
 - linux：准备好lua依赖库并放到指定位置，执行make -f lualog.mak
 
 # 依赖
-- lua5.3
+- lua5.2以上
 - c++17
+
+# 功能
+- 支持C++和lua使用
+- 多线程日志输出
+- 日志定时滚动输出
+- 日志最大行数滚动输出
+- 日志分级、分文件输出
 
 # lua使用方法
 ```lua
 local llog = require("lualog")
 
-llog.init("./newlog/", "qtest", 0, 500000)
+llog.init("./path/", "test_log", 0, 500000)
 
 llog.debug("aaaaaaaaaa")
 llog.info("bbbb")
@@ -23,4 +30,16 @@ llog.error("eeeeeeeeeeee")
 ```
 
 # C++使用方法
-参考lualog.cpp封装给lua的接口
+```c++
+#include "logger.h"
+
+LOG_START("./path/", "test_log", 0, 500000);
+LOG_DEBUG << "aaaaaaaaaa";
+LOG_WARN << "bbbb";
+LOG_INFO << "cccccc";
+LOG_ERROR << "dddddddddd";
+LOG_FETAL << "eeeeeeeeeeee";
+
+LOG_STOP();
+
+```
