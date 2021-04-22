@@ -1,7 +1,7 @@
 #include "logger.h"
 #include "lua.hpp"
 
-using namespace logger
+using namespace logger;
 
 #ifdef _MSC_VER
 #define LLOG_API _declspec(dllexport)
