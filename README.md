@@ -1,13 +1,17 @@
 # lualog
 c++和lua通用的多线程日志库，需要C++17支持
 
+# 依赖
+- c++17
+- [lua](https://github.com/xiyoo0812/lua.git)5.2以上
+- 项目路径如下
+  |--proj
+    |--lua
+    |--lualog
+
 # 编译
 - msvc : 准备好lua依赖库并放到指定位置，将proj文件加到sln后编译。
 - linux：准备好lua依赖库并放到指定位置，执行make -f lualog.mak
-
-# 依赖
-- lua5.2以上
-- c++17
 
 # 功能
 - 支持C++和lua使用
