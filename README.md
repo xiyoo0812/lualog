@@ -6,8 +6,8 @@ c++和lua通用的多线程日志库，需要C++17支持
 - [lua](https://github.com/xiyoo0812/lua.git)5.2以上
 - 项目路径如下<br>
   |--proj <br>
-  &ensp;|--lua <br>
-  &ensp;|--lualog
+  &emsp;|--lua <br>
+  &emsp;|--lualog
 
 # 编译
 - msvc : 准备好lua依赖库并放到指定位置，将proj文件加到sln后编译。
