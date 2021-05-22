@@ -5,8 +5,8 @@ c++和lua通用的多线程日志库，需要C++17支持
 - c++17
 - [lua](https://github.com/xiyoo0812/lua.git)5.2以上
 - 项目路径如下
-  |--proj
-    |--lua
+  |--proj <br>
+    |--lua <br>
     |--lualog
 
 # 编译
