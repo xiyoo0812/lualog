@@ -37,7 +37,7 @@ llog.error("eeeeeeeeeeee")
 ```c++
 #include "logger.h"
 
-LOG_START("./path/", "test_log", 0, 500000);
+LOG_INIT("./path/", "test_log", 0, 500000);
 LOG_DEBUG << "aaaaaaaaaa";
 LOG_WARN << "bbbb";
 LOG_INFO << "cccccc";
