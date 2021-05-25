@@ -657,10 +657,10 @@ namespace logger
 }
 
 
-#define LOG_START(log_path, log_name, roll_type, max_line) logger::log_service::default_instance()->start(log_path, log_name, roll_type, max_line);
-#define LOG_WARN logger::logger_output<log_level::LOG_LEVEL_WARN>(__FILE__, __LINE__)
-#define LOG_INFO logger::logger_output<log_level::LOG_LEVEL_INFO>(__FILE__, __LINE__)
-#define LOG_DEBUG logger::logger_output<log_level::LOG_LEVEL_DEBUG>(__FILE__, __LINE__)
-#define LOG_ERROR logger::logger_output<log_level::LOG_LEVEL_ERROR>(__FILE__, __LINE__)
-#define LOG_FATAL logger::logger_output<log_level::LOG_LEVEL_FATAL>(__FILE__, __LINE__)
-#define LOG_STOP() log_service::default_instance()->stop();
+#define LOG_INIT(log_path, log_name, roll_type, max_line) logger::log_service::default_instance()->start(log_path, log_name, roll_type, max_line);
+#define LOG_WARN logger::logger_output<logger::log_level::LOG_LEVEL_WARN>(__FILE__, __LINE__)
+#define LOG_INFO logger::logger_output<logger::log_level::LOG_LEVEL_INFO>(__FILE__, __LINE__)
+#define LOG_DEBUG logger::logger_output<logger::log_level::LOG_LEVEL_DEBUG>(__FILE__, __LINE__)
+#define LOG_ERROR logger::logger_output<logger::log_level::LOG_LEVEL_ERROR>(__FILE__, __LINE__)
+#define LOG_FATAL logger::logger_output<logger::log_level::LOG_LEVEL_FATAL>(__FILE__, __LINE__)
+#define LOG_STOP() logger::log_service::default_instance()->stop();
