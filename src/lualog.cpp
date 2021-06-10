@@ -63,13 +63,8 @@ int daemon(lua_State* L)
 
 int is_filter(lua_State* L)
 {
-    auto log_filter = log_service::default_instance()->get_filter();
-    if (log_filter)
-    {
-        lua_pushboolean(L, log_filter->is_filter((log_level)lua_tointeger(L, 1)));
-        return 1;
-    }
-    lua_pushboolean(L, false);
+    auto service = log_service::default_instance();
+    lua_pushboolean(L, service->is_filter((log_level)lua_tointeger(L, 1)));
     return 1;
 }
 
