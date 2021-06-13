@@ -113,7 +113,6 @@ namespace logger
     public:
         template<log_level> 
         friend class log_stream;
-
         int line() const { return line_; }
         bool is_grow() const { return grow_; }
         void set_grow(bool grow) { grow_ = grow; }
@@ -257,8 +256,8 @@ namespace logger
     class log_file_base : public log_dest
     {
     public:
-        log_file_base(std::shared_ptr<log_service> service, size_t max_line)
-            : log_dest(service) , max_line_(max_line), line_(0)
+        log_file_base(std::shared_ptr<log_service> service, size_t max_line, int pid)
+            : log_dest(service), pid_(pid), line_(0), max_line_(max_line)
         {
         }
         virtual ~log_file_base()
@@ -292,6 +291,7 @@ namespace logger
             file_ = std::make_unique<std::ofstream>(file_path, std::ios::binary | std::ios::out | std::ios::app);
         }
 
+        int             pid_;
         size_t          line_;
         size_t          max_line_;
         log_time        file_time_;
@@ -327,8 +327,8 @@ namespace logger
     class log_rollingfile : public log_file_base
     {
     public:
-        log_rollingfile(std::shared_ptr<log_service> service, const std::string& log_path, const std::string& log_name, size_t max_line = 10000)
-            : log_file_base(service, max_line)
+        log_rollingfile(std::shared_ptr<log_service> service, int pid, const std::string& log_path, const std::string& log_name, size_t max_line = 10000)
+            : log_file_base(service, max_line, pid)
             , log_name_(log_name)
             , log_path_(log_path)
         {
@@ -361,59 +361,18 @@ namespace logger
                 ltime.tm_min,
                 ltime.tm_sec,
                 ltime.tm_usec,
-                log_service_->get_pid()
+                pid_
             );
             return log_path_.string() + std::string(buf);
         }
 
-        std::string                log_name_;
-        std::filesystem::path    log_path_;
-        rolling_evaler            rolling_evaler_;
+        std::string             log_name_;
+        std::filesystem::path   log_path_;
+        rolling_evaler          rolling_evaler_;
     }; // class log_rollingfile
 
     typedef log_rollingfile<rolling_hourly> log_hourlyrollingfile;
     typedef log_rollingfile<rolling_daily> log_dailyrollingfile;
-
-    class log_service;
-
-    template<log_level level>
-    class log_stream
-    {
-    public:
-        log_stream(std::shared_ptr<log_service> service, const std::string source = "", int line = 0)
-            : service_(service)
-        {
-            if (!service->is_filter(level))
-            {
-                logmsg_ = service->message_pool()->allocate();
-                logmsg_->log_time_ = log_time::now();
-                logmsg_->level_ = level;
-                logmsg_->source_ = source;
-                logmsg_->line_ = line;
-            }
-        }
-        ~log_stream()
-        {
-            if (nullptr != logmsg_)
-            {
-                service_->submit(logmsg_);
-            }
-        }
-
-        template<class T>
-        log_stream& operator<<(const T& value)
-        {
-            if (nullptr != logmsg_)
-            {
-                *logmsg_ << value;
-            }
-            return *this;
-        }
-
-    private:
-        std::shared_ptr<log_message> logmsg_ = nullptr;
-        std::shared_ptr<log_service> service_ = nullptr;
-    };
 
     class log_service
     {
@@ -436,12 +395,12 @@ namespace logger
                 auto share_this = default_instance();
                 if (roll_type == rolling_type::DAYLY)
                 {
-                    auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_path, log_name, max_line);
+                    auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_pid_, log_path, log_name, max_line);
                     dest_names_.insert(std::make_pair(log_name, logfile));
                 }
                 else
                 {
-                    auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_path, log_name, max_line);
+                    auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_pid_, log_path, log_name, max_line);
                     dest_names_.insert(std::make_pair(log_name, logfile));
                 }
                 return true;
@@ -455,12 +414,12 @@ namespace logger
             auto share_this = default_instance();
             if (roll_type == rolling_type::DAYLY)
             {
-                auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_path, log_name, max_line);
+                auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_pid_, log_path, log_name, max_line);
                 dest_lvls_.insert(std::make_pair(log_lvl, logfile));
             }
             else
             {
-                auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_path, log_name, max_line);
+                auto logfile = std::make_shared<log_hourlyrollingfile>(share_this, log_pid_, log_path, log_name, max_line);
                 dest_lvls_.insert(std::make_pair(log_lvl, logfile));
             }
             return true;
@@ -617,6 +576,45 @@ namespace logger
         std::shared_ptr<log_message_queue>  logmsgque_ = std::make_shared<log_message_queue>();
         std::shared_ptr<log_message_pool>   message_pool_ = std::make_shared<log_message_pool>(3000);
     }; // class log_service
+
+    template<log_level level>
+    class log_stream
+    {
+    public:
+        log_stream(std::shared_ptr<log_service> service, const std::string source = "", int line = 0)
+            : service_(service)
+        {
+            if (!service->is_filter(level))
+            {
+                logmsg_ = service->message_pool()->allocate();
+                logmsg_->log_time_ = log_time::now();
+                logmsg_->level_ = level;
+                logmsg_->source_ = source;
+                logmsg_->line_ = line;
+            }
+        }
+        ~log_stream()
+        {
+            if (nullptr != logmsg_)
+            {
+                service_->submit(logmsg_);
+            }
+        }
+
+        template<class T>
+        log_stream& operator<<(const T& value)
+        {
+            if (nullptr != logmsg_)
+            {
+                *logmsg_ << value;
+            }
+            return *this;
+        }
+
+    private:
+        std::shared_ptr<log_message> logmsg_ = nullptr;
+        std::shared_ptr<log_service> service_ = nullptr;
+    };
 
     inline void log_dest::write(std::shared_ptr<log_message> logmsg)
     {

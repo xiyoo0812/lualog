@@ -7,7 +7,7 @@ PROJECT_TYPE = lib
 PROJECT_NO_PREFIX=1
 
 #是否静态库，定义后生成.a文件，否则生成.so文件
-#_STATIC=
+#_LIB=1
 
 #c99
 STDC_EX= -std=c++17
@@ -19,7 +19,7 @@ MYCFLAGS = -I../lua/lua -Wno-sign-compare
 MYLDFLAGS = 
 
 #share.mak包含了一些公用的库,这里加上其他所需的库
-MYLIBS =
+MYLIBS =-llua
 
 #源文件路径
 #SRC_DIR=./src
