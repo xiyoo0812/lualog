@@ -35,7 +35,7 @@ MYLIBS =-llua
 all : pre_build target post_build
 
 #通用规则
-include share.mak
+include ../lua/share.mak
 
 #预编译
 pre_build:
