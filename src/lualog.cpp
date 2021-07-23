@@ -12,7 +12,7 @@ using namespace logger;
 #ifdef _MSC_VER
 #define LLOG_API _declspec(dllexport)
 #else
-#define LLOG_API 
+#define LLOG_API extern
 #endif
 
 int init(lua_State* L)
