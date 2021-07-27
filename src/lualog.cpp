@@ -10,9 +10,9 @@ extern "C"
 using namespace logger;
 
 #ifdef _MSC_VER
-#define LLOG_API _declspec(dllexport)
+#define LLOG_API extern "C" _declspec(dllexport)
 #else
-#define LLOG_API extern
+#define LLOG_API extern "C"
 #endif
 
 int init(lua_State* L)
@@ -142,7 +142,7 @@ void lua_register_function(lua_State* L, const char name[], lua_CFunction func)
     lua_setfield(L, -2, name);
 }
 
-extern "C" LLOG_API int luaopen_lualog(lua_State * L)
+LLOG_API int luaopen_lualog(lua_State * L)
 {
     lua_newtable(L);
     lua_register_function(L, "init", init);
