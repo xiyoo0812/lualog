@@ -9,7 +9,7 @@ PROJECT_NO_PREFIX=1
 #是否静态库，定义后生成.a文件，否则生成.so文件
 #_LIB=1
 
-#c99
+#-std=c99/gnu99/c++11/c++14/c++17/c++20
 STDC_EX= -std=c++17
 
 # share.mak包含了一些编译选项，在这里可以添加新的选项和include目录
@@ -19,7 +19,8 @@ MYCFLAGS = -I../lua/lua -Wno-sign-compare
 MYLDFLAGS = 
 
 #share.mak包含了一些公用的库,这里加上其他所需的库
-MYLIBS =-llua
+#gcc9.1前filesystem需要链接stdc++fs
+MYLIBS =-llua -lstdc++fs
 
 #源文件路径
 #SRC_DIR=./src
