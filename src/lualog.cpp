@@ -15,21 +15,18 @@ using namespace logger;
 #define LLOG_API extern "C"
 #endif
 
-int init(lua_State* L)
-{
+int init(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
     std::string log_path = lua_tostring(L, 1);
     std::string log_name = lua_tostring(L, 2);
-    if (lua_gettop(L) > 3)
-    {
+    if (lua_gettop(L) > 3) {
         roll_type = (rolling_type)lua_tointeger(L, 3);
         max_line = lua_tointeger(L, 4);
     }
     service->start(log_path, log_name, roll_type, max_line);
-    if (lua_gettop(L) > 4)
-    {
+    if (lua_gettop(L) > 4) {
         bool is_daemon = lua_toboolean(L, 5);
         service->daemon(is_daemon);
     }
@@ -37,46 +34,39 @@ int init(lua_State* L)
     return 1;
 }
 
-int close(lua_State* L)
-{
+int close(lua_State* L) {
     auto service = log_service::default_instance();
     service->stop();
     return 0;
 }
 
-int filter(lua_State* L)
-{
+int filter(lua_State* L) {
     auto log_filter = log_service::default_instance()->get_filter();
-    if (log_filter)
-    {
+    if (log_filter) {
         log_filter->filter((log_level)lua_tointeger(L, 1), lua_toboolean(L, 2));
     }
     return 0;
 }
 
-int daemon(lua_State* L)
-{
+int daemon(lua_State* L) {
     auto service = log_service::default_instance();
     service->daemon(lua_toboolean(L, 1));
     return 0;
 }
 
-int is_filter(lua_State* L)
-{
+int is_filter(lua_State* L) {
     auto service = log_service::default_instance();
     lua_pushboolean(L, service->is_filter((log_level)lua_tointeger(L, 1)));
     return 1;
 }
 
-int add_dest(lua_State* L)
-{
+int add_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
     std::string log_path = lua_tostring(L, 1);
     std::string log_name = lua_tostring(L, 2);
-    if (lua_gettop(L) > 3)
-    {
+    if (lua_gettop(L) > 3) {
         roll_type = (rolling_type)lua_tointeger(L, 3);
         max_line = lua_tointeger(L, 4);
     }
@@ -85,32 +75,28 @@ int add_dest(lua_State* L)
     return 1;
 }
 
-int del_dest(lua_State* L)
-{
+int del_dest(lua_State* L) {
     auto service = log_service::default_instance();
     std::string log_name = lua_tostring(L, 1);
     service->del_dest(log_name);
     return 0;
 }
 
-int del_lvl_dest(lua_State* L)
-{
+int del_lvl_dest(lua_State* L) {
     auto service = log_service::default_instance();
     log_level log_lvl = (log_level)lua_tointeger(L, 1);
     service->del_lvl_dest(log_lvl);
     return 0;
 }
 
-int add_lvl_dest(lua_State* L)
-{
+int add_lvl_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
     std::string log_path = lua_tostring(L, 1);
     std::string log_name = lua_tostring(L, 2);
     log_level log_lvl = (log_level)lua_tointeger(L, 3);
-    if (lua_gettop(L) > 4)
-    {
+    if (lua_gettop(L) > 4) {
         roll_type = (rolling_type)lua_tointeger(L, 4);
         max_line = lua_tointeger(L, 5);
     }
@@ -120,13 +106,11 @@ int add_lvl_dest(lua_State* L)
 }
 
 template<log_level level>
-int log(lua_State* L)
-{
+int log(lua_State* L) {
     int line = 0;
     std::string source = "";
     std::string log_msg = lua_tostring(L, 1);
-    if (lua_gettop(L) > 2)
-    {
+    if (lua_gettop(L) > 2) {
         source = lua_tostring(L, 2);
         line = (int)lua_tointeger(L, 3);
     }
@@ -136,14 +120,12 @@ int log(lua_State* L)
     return 1;
 }
 
-void lua_register_function(lua_State* L, const char name[], lua_CFunction func)
-{
+void lua_register_function(lua_State* L, const char name[], lua_CFunction func) {
     lua_pushcfunction(L, func);
     lua_setfield(L, -2, name);
 }
 
-LLOG_API int luaopen_lualog(lua_State * L)
-{
+LLOG_API int luaopen_lualog(lua_State * L) {
     lua_newtable(L);
     lua_register_function(L, "init", init);
     lua_register_function(L, "close", close);
