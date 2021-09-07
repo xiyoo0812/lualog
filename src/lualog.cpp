@@ -15,7 +15,7 @@ using namespace logger;
 #define LLOG_API extern "C"
 #endif
 
-int init(lua_State* L) {
+static int init(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -34,13 +34,13 @@ int init(lua_State* L) {
     return 1;
 }
 
-int close(lua_State* L) {
+static int close(lua_State* L) {
     auto service = log_service::default_instance();
     service->stop();
     return 0;
 }
 
-int filter(lua_State* L) {
+static int filter(lua_State* L) {
     auto log_filter = log_service::default_instance()->get_filter();
     if (log_filter) {
         log_filter->filter((log_level)lua_tointeger(L, 1), lua_toboolean(L, 2));
@@ -48,19 +48,19 @@ int filter(lua_State* L) {
     return 0;
 }
 
-int daemon(lua_State* L) {
+static int daemon(lua_State* L) {
     auto service = log_service::default_instance();
     service->daemon(lua_toboolean(L, 1));
     return 0;
 }
 
-int is_filter(lua_State* L) {
+static int is_filter(lua_State* L) {
     auto service = log_service::default_instance();
     lua_pushboolean(L, service->is_filter((log_level)lua_tointeger(L, 1)));
     return 1;
 }
 
-int add_dest(lua_State* L) {
+static int add_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -75,21 +75,21 @@ int add_dest(lua_State* L) {
     return 1;
 }
 
-int del_dest(lua_State* L) {
+static int del_dest(lua_State* L) {
     auto service = log_service::default_instance();
     std::string log_name = lua_tostring(L, 1);
     service->del_dest(log_name);
     return 0;
 }
 
-int del_lvl_dest(lua_State* L) {
+static int del_lvl_dest(lua_State* L) {
     auto service = log_service::default_instance();
     log_level log_lvl = (log_level)lua_tointeger(L, 1);
     service->del_lvl_dest(log_lvl);
     return 0;
 }
 
-int add_lvl_dest(lua_State* L) {
+static int add_lvl_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -106,7 +106,7 @@ int add_lvl_dest(lua_State* L) {
 }
 
 template<log_level level>
-int log(lua_State* L) {
+static int log(lua_State* L) {
     int line = 0;
     std::string source = "";
     std::string log_msg = lua_tostring(L, 1);
@@ -120,7 +120,7 @@ int log(lua_State* L) {
     return 1;
 }
 
-void lua_register_function(lua_State* L, const char name[], lua_CFunction func) {
+static void lua_register_function(lua_State* L, const char name[], lua_CFunction func) {
     lua_pushcfunction(L, func);
     lua_setfield(L, -2, name);
 }
