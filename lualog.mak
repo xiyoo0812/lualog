@@ -40,7 +40,7 @@ EXCLUDE =
 LIBS =
 #是否启用mimalloc库
 LIBS += -lmimalloc -lpthread
-MYCFLAGS += -I../../mimalloc/mimalloc/include -include mimalloc-override.h
+MYCFLAGS += -I../../mimalloc/mimalloc/include -include ../../mimalloc-ex.h
 #系统库
 LIBS += -lm -ldl -lstdc++
 #自定义库
