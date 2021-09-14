@@ -1,15 +1,14 @@
 --工程名字
-PROJECT_NAME = "llog"
+PROJECT_NAME = "lualog"
 
 --目标名字
-TARGET_NAME = "llog"
+TARGET_NAME = "lualog"
 
---工程类型：static/dynamic/exe
+----工程类型: static/dynamic/exe
 PROJECT_TYPE = "dynamic"
-
 --标准库版本
----std=gnu99/-std=c++11/-std=c++14/
-STDC = "-std=c++17"
+--gnu99/c++11/c++14/c++17/c++20
+STDC = "c++17"
 
 --需要的FLAGS
 FLAGS = {
@@ -22,9 +21,13 @@ INCLUDES = {
 }
 
 --需要连接的库文件
---gcc9.1前filesystem需要链接stdc++fs
 LIBS = {
-	"lua",
+	"lua"
+}
+
+--LINUX需要连接的库文件
+--gcc9.1前filesystem需要链接stdc++fs
+LINUX_LIBS = {
 	"stdc++fs"
 }
 
@@ -32,3 +35,6 @@ LIBS = {
 DEPS = {
 	"lualib"
 }
+
+--分组定义
+GROUP = "luaext"
