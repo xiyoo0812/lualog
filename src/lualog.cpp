@@ -15,7 +15,7 @@ using namespace logger;
 #define LLOG_API extern "C"
 #endif
 
-static int init(lua_State* L) {
+static int llog_init(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -34,13 +34,13 @@ static int init(lua_State* L) {
     return 1;
 }
 
-static int close(lua_State* L) {
+static int llog_close(lua_State* L) {
     auto service = log_service::default_instance();
     service->stop();
     return 0;
 }
 
-static int filter(lua_State* L) {
+static int llog_filter(lua_State* L) {
     auto log_filter = log_service::default_instance()->get_filter();
     if (log_filter) {
         log_filter->filter((log_level)lua_tointeger(L, 1), lua_toboolean(L, 2));
@@ -48,19 +48,19 @@ static int filter(lua_State* L) {
     return 0;
 }
 
-static int daemon(lua_State* L) {
+static int llog_daemon(lua_State* L) {
     auto service = log_service::default_instance();
     service->daemon(lua_toboolean(L, 1));
     return 0;
 }
 
-static int is_filter(lua_State* L) {
+static int llog_is_filter(lua_State* L) {
     auto service = log_service::default_instance();
     lua_pushboolean(L, service->is_filter((log_level)lua_tointeger(L, 1)));
     return 1;
 }
 
-static int add_dest(lua_State* L) {
+static int llog_add_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -75,21 +75,21 @@ static int add_dest(lua_State* L) {
     return 1;
 }
 
-static int del_dest(lua_State* L) {
+static int llog_del_dest(lua_State* L) {
     auto service = log_service::default_instance();
     std::string log_name = lua_tostring(L, 1);
     service->del_dest(log_name);
     return 0;
 }
 
-static int del_lvl_dest(lua_State* L) {
+static int llog_del_lvl_dest(lua_State* L) {
     auto service = log_service::default_instance();
     log_level log_lvl = (log_level)lua_tointeger(L, 1);
     service->del_lvl_dest(log_lvl);
     return 0;
 }
 
-static int add_lvl_dest(lua_State* L) {
+static int llog_add_lvl_dest(lua_State* L) {
     size_t max_line = 10000;
     rolling_type roll_type = rolling_type::HOURLY;
     auto service = log_service::default_instance();
@@ -106,7 +106,7 @@ static int add_lvl_dest(lua_State* L) {
 }
 
 template<log_level level>
-static int log(lua_State* L) {
+static int llog_log(lua_State* L) {
     int line = 0;
     std::string source = "";
     std::string log_msg = lua_tostring(L, 1);
@@ -120,27 +120,27 @@ static int log(lua_State* L) {
     return 1;
 }
 
-static void lua_register_function(lua_State* L, const char name[], lua_CFunction func) {
-    lua_pushcfunction(L, func);
-    lua_setfield(L, -2, name);
-}
+static const luaL_Reg lualog_funcs[] = {
+    { "init", llog_init },
+    { "close", llog_close },
+    { "filter", llog_filter },
+    { "daemon", llog_daemon },
+    { "add_dest", llog_add_dest },
+    { "del_dest", llog_del_dest },
+    { "is_filter", llog_is_filter },
+    { "add_lvl_dest", llog_add_lvl_dest },
+    { "del_lvl_dest", llog_del_lvl_dest },
+    { "info", llog_log<log_level::LOG_LEVEL_INFO> },
+    { "warn", llog_log<log_level::LOG_LEVEL_WARN> },
+    { "dump", llog_log<log_level::LOG_LEVEL_DUMP> },
+    { "debug", llog_log<log_level::LOG_LEVEL_DEBUG> },
+    { "error", llog_log<log_level::LOG_LEVEL_ERROR> },
+    { "fatal", llog_log<log_level::LOG_LEVEL_FATAL> },
+    { NULL, NULL },
+};
 
 LLOG_API int luaopen_lualog(lua_State * L) {
     lua_newtable(L);
-    lua_register_function(L, "init", init);
-    lua_register_function(L, "close", close);
-    lua_register_function(L, "filter", filter);
-    lua_register_function(L, "daemon", daemon);
-    lua_register_function(L, "is_filter", is_filter);
-    lua_register_function(L, "add_dest", add_dest);
-    lua_register_function(L, "del_dest", del_dest);
-    lua_register_function(L, "add_lvl_dest", add_lvl_dest);
-    lua_register_function(L, "del_lvl_dest", del_lvl_dest);
-    lua_register_function(L, "debug", log<log_level::LOG_LEVEL_DEBUG>);
-    lua_register_function(L, "info", log<log_level::LOG_LEVEL_INFO>);
-    lua_register_function(L, "warn", log<log_level::LOG_LEVEL_WARN>);
-    lua_register_function(L, "dump", log<log_level::LOG_LEVEL_DUMP>);
-    lua_register_function(L, "error", log<log_level::LOG_LEVEL_ERROR>);
-    lua_register_function(L, "fatal", log<log_level::LOG_LEVEL_FATAL>);
+    luaL_newlib(L, lualog_funcs);
     return 1;
 }
