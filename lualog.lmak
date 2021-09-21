@@ -7,10 +7,6 @@ TARGET_NAME = "lualog"
 ----工程类型: static/dynamic/exe
 PROJECT_TYPE = "dynamic"
 
---C++标准库版本
---c++11/c++14/c++17/c++20
-STDCPP = "c++17"
-
 --需要的FLAGS
 FLAGS = {
 	"Wno-sign-compare"
