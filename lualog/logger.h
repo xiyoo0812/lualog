@@ -15,12 +15,16 @@
 #include <condition_variable>
 #include <assert.h>
 
+#include "fmt/core.h"
+
 #ifdef WIN32
 #include <process.h>
 #define getpid _getpid
 #else
 #include <unistd.h>
 #endif
+
+using namespace std::chrono;
 
 namespace logger {
     enum class log_level {
@@ -42,15 +46,7 @@ namespace logger {
 
     template <> struct level_names<log_level> {
         constexpr std::array<const char*, 7> operator()() const {
-            return {
-                "UNKNW",
-                "DEBUG",
-                "INFO",
-                "WARN",
-                "DUMP",
-                "ERROR",
-                "FATAL",
-            };
+            return { "UNKNW", "DEBUG", "INFO", "WARN", "DUMP", "ERROR","FATAL" };
         }
     };
 
@@ -58,15 +54,7 @@ namespace logger {
     struct level_colors {};
     template <> struct level_colors<log_level> {
         constexpr std::array<const char*, 7> operator()() const {
-            return {
-                "\x1b[32m",
-                "\x1b[37m",
-                "\x1b[32m",
-                "\x1b[33m",
-                "\x1b[32m",
-                "\x1b[31m",
-                "\x1b[31m",
-            };
+            return { "\x1b[32m","\x1b[37m", "\x1b[32m", "\x1b[33m", "\x1b[32m", "\x1b[31m", "\x1b[31m" };
         }
     };
 
@@ -92,10 +80,10 @@ namespace logger {
         log_time() { }
         log_time(const ::tm& tm, int usec) : ::tm(tm), tm_usec(usec) { }
         static log_time now() {
-            auto time_now = std::chrono::system_clock::now();
-            auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_now.time_since_epoch());
-            auto time_t = std::chrono::system_clock::to_time_t(time_now);
-            return log_time(*std::localtime(&time_t), duration_ms.count() % 1000);
+            system_clock::duration dur = system_clock::now().time_since_epoch();
+            auto time_t = duration_cast<seconds>(dur).count();
+            auto time_ms = duration_cast<milliseconds>(dur).count();
+            return log_time(*std::localtime(&time_t), time_ms % 1000);
         }
     }; // class log_time
 
@@ -203,7 +191,6 @@ namespace logger {
         std::shared_ptr<log_service>    log_service_ = nullptr;
     }; // class log_dest
 
-
     class stdio_dest : public log_dest {
     public:
         stdio_dest(std::shared_ptr<log_service> service) : log_dest(service) {}
@@ -300,19 +287,9 @@ namespace logger {
 
     protected:
         std::string new_log_file_path(const std::shared_ptr<log_message> logmsg) {
-            char buf[64];
-            const log_time& ltime = logmsg->get_log_time();
-            snprintf(buf, sizeof(buf), "%s-%04d%02d%02d-%02d%02d%02d.%03d.p%d.log", log_name_.c_str(),
-                ltime.tm_year + 1900,
-                ltime.tm_mon + 1,
-                ltime.tm_mday,
-                ltime.tm_hour,
-                ltime.tm_min,
-                ltime.tm_sec,
-                ltime.tm_usec,
-                pid_
-            );
-            return log_path_.string() + std::string(buf);
+            const log_time& t = logmsg->get_log_time();
+            return fmt::format("{}{}-{:4d}{:02d}{:02d}-{:02d}{:02d}{:02d}.{:03d}.p{}.log", log_path_.string(), log_name_,
+                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, t.tm_usec, pid_);
         }
 
         std::string             log_name_;
@@ -428,9 +405,7 @@ namespace logger {
             static auto _service = std::make_shared<log_service>();
             if (_service->get_pid() == 0) {
                 int pid = _service->set_pid();
-                std::stringstream stream;
-                stream << "echo logger init. pid:" << pid;
-                system(stream.str().c_str());
+                system(fmt::format("echo logger init. pid: {}", pid).c_str());
             }
             return _service;
         }
@@ -523,36 +498,26 @@ namespace logger {
     };
 
     inline void log_dest::write(std::shared_ptr<log_message> logmsg) {
-        std::string profix = build_prefix(logmsg);
-        std::string postfix = build_postfix(logmsg);
-        raw_write(profix + logmsg->msg() + postfix + "\n", logmsg->level());
+        auto logtxt = fmt::format("{}{}{}\n", build_prefix(logmsg), logmsg->msg(), build_postfix(logmsg));
+        raw_write(logtxt, logmsg->level());
     }
 
     inline std::string log_dest::build_prefix(std::shared_ptr<log_message> logmsg) {
-        char date_ch[64] = { 0 };
         if (!log_service_->is_ignore_prefix()) {
             auto names = level_names<log_level>()();
-            const log_time& ltime = logmsg->get_log_time();
-            snprintf(date_ch, sizeof(date_ch), "%04d%02d%02d %02d:%02d:%02d.%03d/%s ",
-                ltime.tm_year + 1900,
-                ltime.tm_mon + 1,
-                ltime.tm_mday,
-                ltime.tm_hour,
-                ltime.tm_min,
-                ltime.tm_sec,
-                ltime.tm_usec,
-                names[(int)logmsg->level()]
-            );
+            const log_time& t = logmsg->get_log_time();
+            return fmt::format("{:4d}{:02d}{:02d} {:02d}:{:02d}:{:02d}.{:03d}/{} ", t.tm_year + 1900,
+                t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
+                    t.tm_usec, names[(int)logmsg->level()]);
         }
-        return date_ch;
+        return "";
     }
 
     inline std::string log_dest::build_postfix(std::shared_ptr<log_message> logmsg) {
-        char date_ch[280] = { 0 };
         if (!log_service_->is_ignore_postfix()) {
-            snprintf(date_ch, sizeof(date_ch), " [%s:%d]", logmsg->source().c_str(), logmsg->line());
+            return fmt::format("[{}:{}]", logmsg->source().c_str(), logmsg->line());
         }
-        return date_ch;
+        return "";
     }
 
     template<log_level level>

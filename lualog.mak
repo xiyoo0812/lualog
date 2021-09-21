@@ -27,15 +27,18 @@ STDCPP = -std=c++17
 
 #需要的include目录
 MYCFLAGS += -I../lua/lua
+MYCFLAGS += -I../fmt/include
+MYCFLAGS += -I../sol2/include
 
 #需要定义的选项
+MYCFLAGS += -DFMT_HEADER_ONLY
 
 #LDFLAGS
 LDFLAGS =
 
 
 #源文件路径
-SRC_DIR = src
+SRC_DIR = lualog
 
 #需要排除的源文件,目录基于$(SRC_DIR)
 EXCLUDE =

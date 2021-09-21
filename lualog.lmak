@@ -12,15 +12,25 @@ FLAGS = {
 	"Wno-sign-compare"
 }
 
+--需要定义的选项
+DEFINES = {
+	"FMT_HEADER_ONLY"
+}
+
 --需要的include目录
 INCLUDES = {
-	"../lua/lua"
+	"../lua/lua",
+	"../fmt/include",
+	"../sol2/include"
 }
 
 --需要连接的库文件
 LIBS = {
 	"lua"
 }
+
+--源文件路径
+SRC_DIR = "lualog"
 
 --LINUX需要连接的库文件
 --gcc9.1前filesystem需要链接stdc++fs
