@@ -58,7 +58,8 @@ static void llog_log(std::string log, std::string source = "", int line = 0) {
 
 LLOG_API int luaopen_lualog(lua_State* L) {
     sol::state_view lua(L);
-    lua.new_enum("LOG_LEVEL",
+    auto lualog = lua.create_table(); 
+    lualog.new_enum("LOG_LEVEL",
         "INFO", log_level::LOG_LEVEL_INFO,
         "WARN", log_level::LOG_LEVEL_WARN,
         "DUMP", log_level::LOG_LEVEL_DUMP,
@@ -66,7 +67,6 @@ LLOG_API int luaopen_lualog(lua_State* L) {
         "ERROR", log_level::LOG_LEVEL_ERROR,
         "FATAL", log_level::LOG_LEVEL_FATAL
     );
-    auto lualog = lua.create_table(); 
     lualog.set_function("init", llog_init);
     lualog.set_function("close", llog_close);
     lualog.set_function("daemon", llog_daemon);
