@@ -26,26 +26,33 @@ c++和lua通用的多线程日志库
 ```lua
 local llog = require("lualog")
 
-llog.init("./path/", "test_log", 0, 500000)
+local logger = llog.logger.new()
 
-llog.debug("aaaaaaaaaa")
-llog.info("bbbb")
-llog.warn("cccccc")
-llog.dump("dddddddddd")
-llog.error("eeeeeeeeeeee")
+logger:start()
+logger:debug("aaaaaaaaaa")
+logger:info("bbbb")
+logger:warn("cccccc")
+logger:dump("dddddddddd")
+logger:error("eeeeeeeeeeee")
+
+logger:stop()
+
 ```
 
 # C++使用方法
 ```c++
 #include "logger.h"
 
-LOG_INIT("./path/", "test_log", 0, 500000);
-LOG_DEBUG << "aaaaaaaaaa";
-LOG_WARN << "bbbb";
-LOG_INFO << "cccccc";
-LOG_ERROR << "dddddddddd";
-LOG_FETAL << "eeeeeeeeeeee";
+auto logger = std::make_shared<log_service>();
+logger->start();
+logger->add_dest(logpath, logname, rolltype, maxline);
 
-LOG_STOP();
+LOG_DEBUG(logger) << "aaaaaaaaaa";
+LOG_WARN(logger) << "bbbb";
+LOG_INFO(logger) << "cccccc";
+LOG_ERROR(logger) << "dddddddddd";
+LOG_FETAL(logger) << "eeeeeeeeeeee";
+
+logger->stop()
 
 ```
