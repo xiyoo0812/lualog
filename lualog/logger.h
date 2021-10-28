@@ -133,6 +133,7 @@ namespace logger {
                 logmsg->set_grow(true);
                 return logmsg;
             }
+            std::unique_lock<std::mutex>lock(mutex_);
             auto logmsg = messages_.front();
             messages_.pop_front();
             logmsg->clear();
@@ -140,11 +141,13 @@ namespace logger {
         }
         void release(std::shared_ptr<log_message> logmsg) {
             if (!logmsg->is_grow()) {
+                std::unique_lock<std::mutex>lock(mutex_);
                 messages_.push_back(logmsg);
             }
         }
 
     private:
+        std::mutex                  mutex_;
         std::list<std::shared_ptr<log_message>>    messages_;
     }; // class log_message_pool
 
@@ -181,7 +184,7 @@ namespace logger {
         log_dest(std::shared_ptr<log_service>service) : log_service_(service) {}
         virtual ~log_dest() { }
 
-        virtual void flush() = 0;
+        virtual void flush() {};
         virtual void raw_write(std::string msg, log_level lvl) = 0;
         virtual void write(std::shared_ptr<log_message> logmsg);
         virtual std::string build_prefix(std::shared_ptr<log_message> logmsg);
@@ -202,9 +205,6 @@ namespace logger {
             std::cout << colors[(int)lvl];
 #endif // WIN32
             std::cout << msg;
-        }
-        virtual void flush() {
-            std::cout.flush();
         }
     }; // class stdio_dest
 
@@ -406,7 +406,6 @@ namespace logger {
 
         void flush() {
             std::unique_lock<std::mutex> lock(mutex_);
-            std_dest_->flush();
             for (auto dest : dest_names_)
                 dest.second->flush();
             for (auto dest : dest_lvls_)
@@ -466,7 +465,7 @@ namespace logger {
         }
 
         int             log_pid_ = 0;
-        int             log_getv_ = 100;
+        int             log_getv_ = 50;
         int             log_period_ = 10;
         bool            log_daemon_ = false;
         bool            ignore_prefix_ = false;
