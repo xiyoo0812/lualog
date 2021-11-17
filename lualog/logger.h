@@ -7,7 +7,6 @@
 #include <vector>
 #include <chrono>
 #include <thread>
-#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -96,24 +95,23 @@ namespace logger {
         bool is_grow() const { return grow_; }
         void set_grow(bool grow) { grow_ = grow; }
         log_level level() const { return level_; }
-        const std::string msg() const { return stream_.str(); }
+        const std::string msg() const { return stream_; }
         const std::string source() const { return source_; }
         const log_time& get_log_time()const { return log_time_; }
         void clear() {
             stream_.clear();
-            stream_.str("");
+            stream_.shrink_to_fit();
         }
         template<class T>
         log_message& operator<<(const T& value) {
-            stream_ << value;
+            fmt::format_to(std::back_inserter(stream_), "{}", value);
             return *this;
         }
     private:
         int                 line_ = 0;
         bool                grow_ = false;
         log_time            log_time_;
-        std::string         source_;
-        std::stringstream   stream_;
+        std::string         source_, stream_;
         log_level           level_ = log_level::LOG_LEVEL_DEBUG;
     }; // class log_message
 
@@ -187,7 +185,6 @@ namespace logger {
         virtual void flush() {};
         virtual void raw_write(std::string msg, log_level lvl) = 0;
         virtual void write(std::shared_ptr<log_message> logmsg);
-        virtual std::string build_prefix(std::shared_ptr<log_message> logmsg);
         virtual std::string build_postfix(std::shared_ptr<log_message> logmsg);
 
     protected:
@@ -238,11 +235,9 @@ namespace logger {
             file_ = std::make_unique<std::ofstream>(file_path, std::ios::binary | std::ios::out | std::ios::app);
         }
 
-        int             pid_;
-        size_t          line_;
-        size_t          max_line_;
         log_time        file_time_;
         std::string     file_name_;
+        size_t          pid_, line_, max_line_;
         std::unique_ptr<std::ofstream> file_ = nullptr;
     }; // class log_file
 
@@ -412,9 +407,7 @@ namespace logger {
                 dest.second->flush();
         }
 
-        bool is_ignore_prefix() const { return ignore_prefix_; }
         bool is_ignore_postfix() const { return ignore_postfix_; }
-        void ignore_prefix() { ignore_prefix_ = true; }
         void ignore_postfix() { ignore_postfix_ = true; }
 
         bool is_filter(log_level lv) {
@@ -464,12 +457,8 @@ namespace logger {
             }
         }
 
-        int             log_pid_ = 0;
-        int             log_getv_ = 50;
-        int             log_period_ = 10;
-        bool            log_daemon_ = false;
-        bool            ignore_prefix_ = false;
-        bool            ignore_postfix_ = true;
+        bool    log_daemon_ = false, ignore_postfix_ = true;
+        int     log_pid_ = 0, log_getv_ = 50, log_period_ = 10;
         std::mutex                      mutex_;
         std::thread                     thread_;
         std::shared_ptr<log_dest>       std_dest_ = nullptr;
@@ -482,19 +471,12 @@ namespace logger {
     }; // class log_service
 
     inline void log_dest::write(std::shared_ptr<log_message> logmsg) {
-        auto logtxt = fmt::format("{}{}{}\n", build_prefix(logmsg), logmsg->msg(), build_postfix(logmsg));
+        auto names = level_names<log_level>()();
+        const log_time& t = logmsg->get_log_time();
+        auto logtxt = fmt::format("[{:4d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}.{:03d}][{}] {}{}\n",
+            t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, t.tm_usec, 
+            names[(int)logmsg->level()], build_postfix(logmsg), logmsg->msg());
         raw_write(logtxt, logmsg->level());
-    }
-
-    inline std::string log_dest::build_prefix(std::shared_ptr<log_message> logmsg) {
-        if (!log_service_->is_ignore_prefix()) {
-            auto names = level_names<log_level>()();
-            const log_time& t = logmsg->get_log_time();
-            return fmt::format("{:4d}{:02d}{:02d} {:02d}:{:02d}:{:02d}.{:03d}/{} ", t.tm_year + 1900,
-                t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
-                    t.tm_usec, names[(int)logmsg->level()]);
-        }
-        return "";
     }
 
     inline std::string log_dest::build_postfix(std::shared_ptr<log_message> logmsg) {
