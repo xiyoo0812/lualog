@@ -80,9 +80,9 @@ namespace logger {
         log_time(const ::tm& tm, int usec) : ::tm(tm), tm_usec(usec) { }
         static log_time now() {
             system_clock::duration dur = system_clock::now().time_since_epoch();
-            auto time_t = duration_cast<seconds>(dur).count();
+            time_t time = duration_cast<seconds>(dur).count();
             auto time_ms = duration_cast<milliseconds>(dur).count();
-            return log_time(*std::localtime(&time_t), time_ms % 1000);
+            return log_time(*std::localtime(&time), time_ms % 1000);
         }
     }; // class log_time
 
@@ -295,38 +295,6 @@ namespace logger {
     typedef log_rollingfile<rolling_hourly> log_hourlyrollingfile;
     typedef log_rollingfile<rolling_daily> log_dailyrollingfile;
 
-    template<log_level level>
-    class log_stream {
-    public:
-        log_stream(std::shared_ptr<log_service> service, const std::string source = "", int line = 0)
-            : service_(service) {
-            if (!service->is_filter(level)) {
-                logmsg_ = service->message_pool()->allocate();
-                logmsg_->log_time_ = log_time::now();
-                logmsg_->level_ = level;
-                logmsg_->source_ = source;
-                logmsg_->line_ = line;
-            }
-        }
-        ~log_stream()         {
-            if (nullptr != logmsg_) {
-                service_->submit(logmsg_);
-            }
-        }
-
-        template<class T>
-        log_stream& operator<<(const T& value) {
-            if (nullptr != logmsg_) {
-                *logmsg_ << value;
-            }
-            return *this;
-        }
-
-    private:
-        std::shared_ptr<log_message> logmsg_ = nullptr;
-        std::shared_ptr<log_service> service_ = nullptr;
-    };
-
     class log_service : public std::enable_shared_from_this<log_service> {
     public:
         void daemon(bool status) { log_daemon_ = status; }
@@ -469,6 +437,38 @@ namespace logger {
         std::shared_ptr<log_message_queue>  logmsgque_ = std::make_shared<log_message_queue>();
         std::shared_ptr<log_message_pool>   message_pool_ = std::make_shared<log_message_pool>(3000);
     }; // class log_service
+
+    template<log_level level>
+    class log_stream {
+    public:
+        log_stream(std::shared_ptr<log_service> service, const std::string source = "", int line = 0)
+            : service_(service) {
+            if (!service->is_filter(level)) {
+                logmsg_ = service->message_pool()->allocate();
+                logmsg_->log_time_ = log_time::now();
+                logmsg_->level_ = level;
+                logmsg_->source_ = source;
+                logmsg_->line_ = line;
+            }
+        }
+        ~log_stream() {
+            if (nullptr != logmsg_) {
+                service_->submit(logmsg_);
+            }
+        }
+
+        template<class T>
+        log_stream& operator<<(const T& value) {
+            if (nullptr != logmsg_) {
+                *logmsg_ << value;
+            }
+            return *this;
+        }
+
+    private:
+        std::shared_ptr<log_message> logmsg_ = nullptr;
+        std::shared_ptr<log_service> service_ = nullptr;
+    };
 
     inline void log_dest::write(std::shared_ptr<log_message> logmsg) {
         auto names = level_names<log_level>()();
