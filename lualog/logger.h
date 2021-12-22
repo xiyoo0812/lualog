@@ -305,7 +305,7 @@ namespace logger {
             std::unique_lock<std::mutex> lock(mutex_);
             if (dest_names_.find(log_name) == dest_names_.end()) {
                 if (roll_type == rolling_type::DAYLY) {
-                    auto logfile = std::make_shared<log_hourlyrollingfile>(shared_from_this(), log_pid_, log_path, log_name, max_line);
+                    auto logfile = std::make_shared<log_dailyrollingfile>(shared_from_this(), log_pid_, log_path, log_name, max_line);
                     dest_names_.insert(std::make_pair(log_name, logfile));
                 }
                 else {
@@ -320,7 +320,7 @@ namespace logger {
         bool add_lvl_dest(std::string log_path, std::string log_name, log_level log_lvl, rolling_type roll_type, size_t max_line) {
             std::unique_lock<std::mutex> lock(mutex_);
             if (roll_type == rolling_type::DAYLY) {
-                auto logfile = std::make_shared<log_hourlyrollingfile>(shared_from_this(), log_pid_, log_path, log_name, max_line);
+                auto logfile = std::make_shared<log_dailyrollingfile>(shared_from_this(), log_pid_, log_path, log_name, max_line);
                 dest_lvls_.insert(std::make_pair(log_lvl, logfile));
             }
             else {
