@@ -23,6 +23,7 @@ namespace logger {
             "stop", &log_service::stop,
             "start", &log_service::start,
             "daemon", &log_service::daemon,
+            "option", &log_service::option,
             "filter", &log_service::filter,
             "add_dest", &log_service::add_dest,
             "del_dest", &log_service::del_dest,

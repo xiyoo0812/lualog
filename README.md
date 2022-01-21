@@ -27,8 +27,9 @@ c++和lua通用的多线程日志库
 local llog = require("lualog")
 
 local logger = llog.logger.new()
-
+logger:option("./logs/", "service", 1, 1, 100000)
 logger:start()
+
 logger:debug("aaaaaaaaaa")
 logger:info("bbbb")
 logger:warn("cccccc")
@@ -44,8 +45,9 @@ logger:stop()
 #include "logger.h"
 
 auto logger = std::make_shared<log_service>();
+logger->option(logname, rolltype, maxline)
+logger->add_dest(logpath);
 logger->start();
-logger->add_dest(logpath, logname, rolltype, maxline);
 
 LOG_DEBUG(logger) << "aaaaaaaaaa";
 LOG_WARN(logger) << "bbbb";
