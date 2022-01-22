@@ -300,7 +300,7 @@ namespace logger {
     class log_service : public std::enable_shared_from_this<log_service> {
     public:
         void daemon(bool status) { log_daemon_ = status; }
-        void option(std::string& log_path, std::string& service, std::string& index, rolling_type type, int max_line) {
+        void option(std::string log_path, std::string service, std::string index, rolling_type type, int max_line) {
             log_path_ = log_path, service_ = service; rolling_type_ = type; max_line_ = max_line;
             log_path_.append(fmt::format("{}-{}", service, index));
         }
