@@ -312,8 +312,8 @@ namespace logger {
             if (dest_features_.find(feature) == dest_features_.end()) {
                 std::shared_ptr<log_dest> logfile = nullptr;
                 if (rolling_type_ == rolling_type::DAYLY) {
-                    logfile = std::make_shared<log_dailyrollingfile>(shared_from_this(), log_pid_, log_path_, service_, feature, max_line_);                }
-                else {
+                    logfile = std::make_shared<log_dailyrollingfile>(shared_from_this(), log_pid_, log_path_, service_, feature, max_line_);
+                } else {
                     logfile = std::make_shared<log_hourlyrollingfile>(shared_from_this(), log_pid_, log_path_, service_, feature, max_line_);
                 }
                 if (!def_dest_) {
