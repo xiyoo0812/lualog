@@ -369,8 +369,8 @@ namespace logger {
         }
 
         void stop() {
+            logmsgque_->put(stop_msg_);
             if (thread_.joinable()) {
-                logmsgque_->put(stop_msg_);
                 thread_.join();
             }
         }
@@ -413,7 +413,7 @@ namespace logger {
             bool loop = true;
             while (loop) {
                 std::vector<std::shared_ptr<log_message>> logmsgs;
-                logmsgque_->timed_getv(logmsgs, 50, log_period_);
+                logmsgque_->timed_getv(logmsgs, log_getv_, log_period_);
                 for (auto logmsg : logmsgs) {
                     if (logmsg == stop_msg_) {
                         loop = false;
@@ -430,7 +430,9 @@ namespace logger {
                     if (itFea != dest_features_.end()) {
                         itFea->second->write(logmsg);
                     }
-                    def_dest_->write(logmsg);
+                    if (def_dest_) {
+                        def_dest_->write(logmsg);
+                    }
                     message_pool_->release(logmsg);
                 }
                 flush();
