@@ -506,9 +506,15 @@ namespace logger {
     }
 }
 
-#define LOG_WARN(service, feature) service->hold<logger::log_level::LOG_LEVEL_WARN>(feature, __FILE__, __LINE__)
-#define LOG_INFO(service, feature) service->hold<logger::log_level::LOG_LEVEL_INFO>(feature, __FILE__, __LINE__)
-#define LOG_DUMP(service, feature) service->hold<logger::log_level::LOG_LEVEL_DUMP>(feature, __FILE__, __LINE__)
-#define LOG_DEBUG(service, feature) service->hold<logger::log_level::LOG_LEVEL_DEBUG>(feature, __FILE__, __LINE__)
-#define LOG_ERROR(service, feature) service->hold<logger::log_level::LOG_LEVEL_ERROR>(feature, __FILE__, __LINE__)
-#define LOG_FATAL(service, feature) service->hold<logger::log_level::LOG_LEVEL_FATAL>(feature, __FILE__, __LINE__)
+#define LOG_WARN(service) service->hold<logger::log_level::LOG_LEVEL_WARN>("", __FILE__, __LINE__)
+#define LOG_INFO(service) service->hold<logger::log_level::LOG_LEVEL_INFO>("", __FILE__, __LINE__)
+#define LOG_DUMP(service) service->hold<logger::log_level::LOG_LEVEL_DUMP>("", __FILE__, __LINE__)
+#define LOG_DEBUG(service) service->hold<logger::log_level::LOG_LEVEL_DEBUG>("", __FILE__, __LINE__)
+#define LOG_ERROR(service) service->hold<logger::log_level::LOG_LEVEL_ERROR>("", __FILE__, __LINE__)
+#define LOG_FATAL(service) service->hold<logger::log_level::LOG_LEVEL_FATAL>("", __FILE__, __LINE__)
+#define LOGF_WARN(service, feature) service->hold<logger::log_level::LOG_LEVEL_WARN>(feature, __FILE__, __LINE__)
+#define LOGF_INFO(service, feature) service->hold<logger::log_level::LOG_LEVEL_INFO>(feature, __FILE__, __LINE__)
+#define LOGF_DUMP(service, feature) service->hold<logger::log_level::LOG_LEVEL_DUMP>(feature, __FILE__, __LINE__)
+#define LOGF_DEBUG(service, feature) service->hold<logger::log_level::LOG_LEVEL_DEBUG>(feature, __FILE__, __LINE__)
+#define LOGF_ERROR(service, feature) service->hold<logger::log_level::LOG_LEVEL_ERROR>(feature, __FILE__, __LINE__)
+#define LOGF_FATAL(service, feature) service->hold<logger::log_level::LOG_LEVEL_FATAL>(feature, __FILE__, __LINE__)
