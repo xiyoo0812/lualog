@@ -15,6 +15,7 @@
 #include <assert.h>
 
 #include "fmt/core.h"
+#include "fmt/color.h"
 
 #ifdef WIN32
 #include <process.h>
@@ -51,8 +52,8 @@ namespace logger {
     template <typename T>
     struct level_colors {};
     template <> struct level_colors<log_level> {
-        constexpr std::array<const char*, 7> operator()() const {
-            return { "\x1b[32m","\x1b[37m", "\x1b[32m", "\x1b[33m", "\x1b[32m", "\x1b[31m", "\x1b[31m" };
+        constexpr std::array<fmt::color, 7> operator()() const {
+            return { fmt::color::gray,fmt::color::white_smoke,fmt::color::green,fmt::color::yellow,fmt::color::blue,fmt::color::red,fmt::color::dark_red };
         }
     };
 
@@ -197,11 +198,8 @@ namespace logger {
         virtual ~stdio_dest() { }
 
         virtual void raw_write(std::string msg, log_level lvl) {
-#ifdef WIN32
             auto colors = level_colors<log_level>()();
-            std::cout << colors[(int)lvl];
-#endif // WIN32
-            std::cout << msg;
+            fmt::print(fg(colors[(int)lvl]) | fmt::emphasis::italic, "{}\n", msg);
         }
     }; // class stdio_dest
 
@@ -225,7 +223,7 @@ namespace logger {
         const log_time& file_time() const { return file_time_; }
 
     protected:
-        virtual void create(std::filesystem::path file_path, std::string file_name, const log_time& file_time, const char* mode) {
+        virtual void create(std::filesystem::path file_path, std::string file_name, const log_time& file_time) {
             if (file_) {
                 file_->flush();
                 file_->close();
@@ -272,10 +270,10 @@ namespace logger {
 
         virtual void write(std::shared_ptr<log_message> logmsg) {
             line_++;
-            if (rolling_evaler_.eval(this, logmsg) || line_ >= max_line_) {
+            if (file_ == nullptr || rolling_evaler_.eval(this, logmsg) || line_ >= max_line_) {
                 std::filesystem::create_directories(log_path_);
                 std::string file_name = new_log_file_path(logmsg);
-                create(log_path_, file_name, logmsg->get_log_time(), "a+");
+                create(log_path_, file_name, logmsg->get_log_time());
                 assert(file_);
                 line_ = 0;
             }
@@ -385,6 +383,7 @@ namespace logger {
                 dest.second->flush();
             for (auto dest : dest_lvls_)
                 dest.second->flush();
+            def_dest_->flush();
         }
 
         bool is_ignore_postfix() const { return ignore_postfix_; }
