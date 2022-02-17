@@ -199,7 +199,7 @@ namespace logger {
 
         virtual void raw_write(std::string msg, log_level lvl) {
             auto colors = level_colors<log_level>()();
-            fmt::print(fg(colors[(int)lvl]) | fmt::emphasis::italic, "{}\n", msg);
+            fmt::print(fg(colors[(int)lvl]) | fmt::emphasis::italic, "{}", msg);
         }
     }; // class stdio_dest
 
