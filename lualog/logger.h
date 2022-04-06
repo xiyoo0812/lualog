@@ -6,6 +6,7 @@
 #include <mutex>
 #include <vector>
 #include <chrono>
+#include <atomic>
 #include <thread>
 #include <fstream>
 #include <iostream>
@@ -40,6 +41,21 @@ namespace logger {
         HOURLY = 0,
         DAYLY = 1,
     }; //rolling_type
+
+    class spin_mutex :public std::mutex {
+    public:
+        spin_mutex() = default;
+        spin_mutex(const spin_mutex&) = delete;
+        spin_mutex& operator = (const spin_mutex&) = delete;
+        void lock() {
+            while(flag.test_and_set(std::memory_order_acquire));
+        }
+        void unlock() {
+            flag.clear(std::memory_order_release);
+        }
+    private:
+        std::atomic_flag flag = ATOMIC_FLAG_INIT;
+    }; //spin_mutex
 
     template <typename T>
     struct level_names {};
@@ -132,7 +148,7 @@ namespace logger {
                 logmsg->set_grow(true);
                 return logmsg;
             }
-            std::unique_lock<std::mutex>lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             auto logmsg = messages_.front();
             messages_.pop_front();
             logmsg->clear();
@@ -140,39 +156,40 @@ namespace logger {
         }
         void release(std::shared_ptr<log_message> logmsg) {
             if (!logmsg->is_grow()) {
-                std::unique_lock<std::mutex>lock(mutex_);
+                std::unique_lock<spin_mutex> lock(mutex_);
                 messages_.push_back(logmsg);
             }
         }
 
     private:
-        std::mutex                  mutex_;
+        spin_mutex mutex_;
         std::list<std::shared_ptr<log_message>>    messages_;
     }; // class log_message_pool
 
     class log_message_queue {
     public:
         void put(std::shared_ptr<log_message> logmsg) {
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             messages_.push_back(logmsg);
             condv_.notify_all();
         }
 
         void timed_getv(std::vector<std::shared_ptr<log_message>>& vec_msg, int number, int time) {
-            std::unique_lock<std::mutex>lock(mutex_);
             if (messages_.empty()) {
+                std::unique_lock<std::mutex> lock(mutex_);
                 condv_.wait_for(lock, std::chrono::milliseconds(time));
             }
             while (!messages_.empty() && number > 0) {
                 auto logmsg = messages_.front();
                 vec_msg.push_back(logmsg);
-                messages_.pop_front();
                 number--;
+                std::unique_lock<spin_mutex> lock(mutex_);
+                messages_.pop_front();
             }
         }
 
     private:
-        std::mutex                  mutex_;
+        spin_mutex                  mutex_;
         std::condition_variable     condv_;
         std::list<std::shared_ptr<log_message>> messages_;
     }; // class log_message_queue
@@ -306,7 +323,7 @@ namespace logger {
         std::shared_ptr<log_message_pool> message_pool() { return message_pool_; }
 
         bool add_dest(std::string feature) {
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             if (dest_features_.find(feature) == dest_features_.end()) {
                 std::shared_ptr<log_dest> logfile = nullptr;
                 if (rolling_type_ == rolling_type::DAYLY) {
@@ -328,7 +345,7 @@ namespace logger {
             auto names = level_names<log_level>()();
             std::string feature = names[(int)log_lvl];
             std::transform(feature.begin(), feature.end(), feature.begin(), [](auto c) { return std::tolower(c); });
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             if (rolling_type_ == rolling_type::DAYLY) {
                 auto logfile = std::make_shared<log_dailyrollingfile>(shared_from_this(), log_pid_, log_path_, service_, feature, max_line_);
                 dest_lvls_.insert(std::make_pair(log_lvl, logfile));
@@ -341,7 +358,7 @@ namespace logger {
         }
 
         void del_dest(std::string feature) {
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             auto it = dest_features_.find(feature);
             if (it != dest_features_.end()) {
                 dest_features_.erase(it);
@@ -349,7 +366,7 @@ namespace logger {
         }
 
         void del_lvl_dest(log_level log_lvl) {
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             auto it = dest_lvls_.find(log_lvl);
             if (it != dest_lvls_.end()) {
                 dest_lvls_.erase(it);
@@ -378,7 +395,7 @@ namespace logger {
         }
 
         void flush() {
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(mutex_);
             for (auto dest : dest_features_)
                 dest.second->flush();
             for (auto dest : dest_lvls_)
@@ -440,7 +457,7 @@ namespace logger {
 
         bool log_daemon_ = false, ignore_postfix_ = true;
         int  log_pid_ = 0, log_getv_ = 50, log_period_ = 10, max_line_ = 100000;
-        std::mutex              mutex_;
+        spin_mutex              mutex_;
         std::thread             thread_;
         rolling_type            rolling_type_;
         std::string             service_;
