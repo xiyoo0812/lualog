@@ -27,7 +27,6 @@ namespace logger {
             "filter", &log_service::filter,
             "add_dest", &log_service::add_dest,
             "del_dest", &log_service::del_dest,
-            "del_dest", &log_service::del_dest,
             "is_filter", &log_service::is_filter,
             "add_lvl_dest", &log_service::add_lvl_dest,
             "del_lvl_dest", &log_service::del_lvl_dest,
