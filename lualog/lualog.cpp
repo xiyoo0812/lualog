@@ -42,7 +42,9 @@ namespace logger {
     }
 }
 
-extern "C" LUALIB_API int luaopen_lualog(lua_State* L) {
-    system("echo logger service init.");
-    return sol::stack::call_lua(L, 1, logger::open_lualog);
+extern "C" {
+    LUALIB_API int luaopen_lualog(lua_State* L) {
+        system("echo logger service init.");
+        return sol::stack::call_lua(L, 1, logger::open_lualog);
+    }
 }
