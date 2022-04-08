@@ -1,3 +1,4 @@
+#define LUA_LIB
 #include "logger.h"
 #include "sol/sol.hpp"
 
@@ -41,13 +42,7 @@ namespace logger {
     }
 }
 
-#ifdef _MSC_VER
-#define LLOG_API extern "C" _declspec(dllexport)
-#else
-#define LLOG_API extern "C"
-#endif
-
-LLOG_API int luaopen_lualog(lua_State* L) {
+extern "C" LUALIB_API int luaopen_lualog(lua_State* L) {
     system("echo logger service init.");
     return sol::stack::call_lua(L, 1, logger::open_lualog);
 }
