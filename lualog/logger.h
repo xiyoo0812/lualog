@@ -42,7 +42,7 @@ namespace logger {
         DAYLY = 1,
     }; //rolling_type
 
-    class spin_mutex :public std::mutex {
+    class spin_mutex {
     public:
         spin_mutex() = default;
         spin_mutex(const spin_mutex&) = delete;
@@ -169,7 +169,7 @@ namespace logger {
     class log_message_queue {
     public:
         void put(std::shared_ptr<log_message> logmsg) {
-            std::unique_lock<spin_mutex> lock(mutex_);
+            std::unique_lock<spin_mutex> lock(spin_);
             messages_.push_back(logmsg);
             condv_.notify_all();
         }
@@ -183,13 +183,14 @@ namespace logger {
                 auto logmsg = messages_.front();
                 vec_msg.push_back(logmsg);
                 number--;
-                std::unique_lock<spin_mutex> lock(mutex_);
+                std::unique_lock<spin_mutex> lock(spin_);
                 messages_.pop_front();
             }
         }
 
     private:
-        spin_mutex                  mutex_;
+        spin_mutex                  spin_;
+        std::mutex                  mutex_;
         std::condition_variable     condv_;
         std::list<std::shared_ptr<log_message>> messages_;
     }; // class log_message_queue
