@@ -401,7 +401,9 @@ namespace logger {
                 dest.second->flush();
             for (auto dest : dest_lvls_)
                 dest.second->flush();
-            def_dest_->flush();
+            if (def_dest_) {
+                def_dest_->flush();
+            }
         }
 
         bool is_ignore_postfix() const { return ignore_postfix_; }
