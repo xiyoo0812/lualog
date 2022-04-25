@@ -26,7 +26,7 @@ WINDOWS_DEFINES = {
 INCLUDES = {
 	"../lua/lua",
 	"../fmt/include",
-	"../sol2/include"
+	"../luakit/include"
 }
 
 --需要连接的库文件

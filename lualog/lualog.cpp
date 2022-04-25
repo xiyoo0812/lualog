@@ -1,17 +1,12 @@
 #define LUA_LIB
 #include "logger.h"
-#include "sol/sol.hpp"
-
-extern "C" {
-    #include "lua.h"
-    #include "lauxlib.h"
-}
+#include "lua_kit.h"
 
 namespace logger {
 
-    sol::table open_lualog(sol::this_state L) {
-        sol::state_view lua(L);
-        auto lualog = lua.create_table();
+    luakit::lua_table open_lualog(lua_State* L) {
+        luakit::kit_state kit_state(L);
+        auto lualog = kit_state.new_table();
         lualog.new_enum("LOG_LEVEL",
             "INFO", log_level::LOG_LEVEL_INFO,
             "WARN", log_level::LOG_LEVEL_WARN,
@@ -20,7 +15,7 @@ namespace logger {
             "ERROR", log_level::LOG_LEVEL_ERROR,
             "FATAL", log_level::LOG_LEVEL_FATAL
         );
-        lualog.new_usertype<log_service>("logger",
+        kit_state.new_class<log_service>(
             "stop", &log_service::stop,
             "start", &log_service::start,
             "daemon", &log_service::daemon,
@@ -45,6 +40,7 @@ namespace logger {
 extern "C" {
     LUALIB_API int luaopen_lualog(lua_State* L) {
         system("echo logger service init.");
-        return sol::stack::call_lua(L, 1, logger::open_lualog);
+        auto llog = logger::open_lualog(L);
+        return llog.push_stack();
     }
 }
