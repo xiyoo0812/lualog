@@ -27,7 +27,8 @@ c++和lua通用的多线程日志库
 local llog = require("lualog")
 
 local logger = llog.logger.new()
-logger:option("./logs/", "service", 1, 1, 100000)
+logger:option("./logs/", "service", 1, 1)
+logger:set_max_line(100000)
 logger:start()
 
 logger:debug("aaaaaaaaaa")
