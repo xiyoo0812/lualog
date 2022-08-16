@@ -26,6 +26,9 @@
 
 using namespace std::chrono;
 
+//c++20支持后删掉
+using weeks = duration<int, std::ratio<3600 * 24 * 7>>;
+
 namespace logger {
     enum class log_level {
         LOG_LEVEL_DEBUG = 1,
@@ -297,6 +300,14 @@ namespace logger {
             line_++;
             if (file_ == nullptr || rolling_evaler_.eval(this, logmsg) || line_ >= max_line_) {
                 std::filesystem::create_directories(log_path_);
+                for (auto entry : std::filesystem::recursive_directory_iterator(log_path_)) {
+                    if (!entry.is_directory()) {
+                        auto ftime = std::filesystem::last_write_time(entry.path());
+                        if (duration_cast<weeks>(std::filesystem::file_time_type::clock::now() - ftime).count() > 0) {
+                            try { std::filesystem::remove(entry.path()); } catch (...) {}
+                        }
+                    }
+                }
                 std::string file_name = new_log_file_path(logmsg);
                 create(log_path_, file_name, logmsg->get_log_time());
                 assert(file_);
