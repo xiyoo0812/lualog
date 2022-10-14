@@ -243,7 +243,7 @@ namespace logger {
         const log_time& file_time() const { return file_time_; }
 
     protected:
-        virtual void create(path& file_path, std::string& file_name, const log_time& file_time) {
+        virtual void create(path file_path, std::string& file_name, const log_time& file_time) {
             if (file_) {
                 file_->flush();
                 file_->close();
@@ -294,7 +294,7 @@ namespace logger {
         virtual void write(std::shared_ptr<log_message> logmsg) {
             line_++;
             if (file_ == nullptr || rolling_evaler_.eval(this, logmsg) || line_ >= max_line_) {
-                create_directories(log_path_);
+                try { create_directories(log_path_); } catch (...) {}
                 for (auto entry : recursive_directory_iterator(log_path_)) {
                     if (!entry.is_directory() && entry.path().extension().string() == ".log") {
                         auto ftime = last_write_time(entry.path());
