@@ -43,6 +43,20 @@ LINUX_LIBS = {
 	"stdc++fs"
 }
 
+--非WINDOWS预编译命令
+--格式: cmd
+--"cp -r bin/libcurl-x64.dll $(SolutionDir)bin"
+NWINDOWS_PREBUILDS = {
+	"rm -fr $(TARGET_DIR)/lib$(PROJECT_NAME).so"
+}
+
+--非WINDOWS编译后命令
+--格式: cmd
+--"cp -r", "bin/libcurl-x64.so $(SolutionDir)bin"
+NWINDOWS_POSTBUILDS = {
+	"ln -s $(TARGET_DIR)/$(PROJECT_NAME).so $(TARGET_DIR)/lib$(PROJECT_NAME).so"
+}
+
 --依赖项目
 DEPS = {
 	"lualib"

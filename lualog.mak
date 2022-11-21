@@ -118,6 +118,8 @@ clean :
 pre_build:
 	mkdir -p $(INT_DIR)
 	mkdir -p $(TARGET_DIR)
+	rm -fr $(TARGET_DIR)/lib$(PROJECT_NAME).so
 
 #后编译
 post_build:
+	ln -s $(TARGET_DIR)/$(PROJECT_NAME).so $(TARGET_DIR)/lib$(PROJECT_NAME).so
