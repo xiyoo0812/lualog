@@ -57,8 +57,12 @@ endif
 LIBS += -lm -ldl -lstdc++ -lpthread
 
 #定义基础的编译选项
+ifndef CC
 CC = gcc
+endif
+ifndef CX
 CX = c++
+endif
 CFLAGS = -g -O2 -Wall -Wno-deprecated -Wextra -Wno-unknown-pragmas $(STDC) $(MYCFLAGS)
 CXXFLAGS = -g -O2 -Wall -Wno-deprecated -Wextra -Wno-unknown-pragmas $(STDCPP) $(MYCFLAGS)
 
@@ -77,9 +81,13 @@ PROJECT_PREFIX =
 MYCFLAGS += -fPIC
 TARGET_DIR = $(SOLUTION_DIR)bin
 TARGET_DYNAMIC =  $(TARGET_DIR)/$(PROJECT_PREFIX)$(TARGET_NAME).so
-#macos系统so链接问题
+#soname
+ifeq ($(UNAME_S), Linux)
+LDFLAGS += -Wl,-soname,$(PROJECT_PREFIX)$(TARGET_NAME).so
+endif
+#install_name
 ifeq ($(UNAME_S), Darwin)
-LDFLAGS += -install_name $(PROJECT_PREFIX)$(TARGET_NAME).so
+LDFLAGS += -Wl,-install_name,$(PROJECT_PREFIX)$(TARGET_NAME).so
 endif
 
 #link添加.so目录
@@ -118,8 +126,6 @@ clean :
 pre_build:
 	mkdir -p $(INT_DIR)
 	mkdir -p $(TARGET_DIR)
-	rm -fr $(TARGET_DIR)/lib$(PROJECT_NAME).so
 
 #后编译
 post_build:
-	ln -s $(TARGET_DIR)/$(PROJECT_NAME).so $(TARGET_DIR)/lib$(PROJECT_NAME).so
