@@ -6,10 +6,8 @@ using namespace luakit;
 
 namespace logger {
 
-    thread_local luabuf* td_buffer = nullptr;
-    
-    const int LOG_FLAG_FORMAT   = 1;
-    const int LOG_FLAG_PRETTY   = 2;
+    const int LOG_FLAG_FORMAT = 1;
+    const int LOG_FLAG_PRETTY = 2;
     const int LOG_FLAG_MONITOR = 4;
 
     string read_args(lua_State* L, int flag, int index) {
@@ -23,9 +21,10 @@ namespace logger {
         case LUA_TBOOLEAN: return lua_toboolean(L, index) ? "true" : "false";
         case LUA_TTABLE:
             if ((flag & LOG_FLAG_FORMAT) == LOG_FLAG_FORMAT) {
-                td_buffer->clean();
-                serialize_one(L, td_buffer, index, 1, (flag & LOG_FLAG_PRETTY) == LOG_FLAG_PRETTY);
-                return string((char*)td_buffer->head(), td_buffer->size());
+                auto buf = luakit::get_buff();
+                buf->clean();
+                serialize_one(L, buf, index, 1, (flag & LOG_FLAG_PRETTY) == LOG_FLAG_PRETTY);
+                return string((char*)buf->head(), buf->size());
             }
             return luaL_tolstring(L, index, nullptr);
         case LUA_TNUMBER:
@@ -72,7 +71,6 @@ namespace logger {
 
     luakit::lua_table open_lualog(lua_State* L) {
         luakit::kit_state kit_state(L);
-        td_buffer = kit_state.get_buff();
         auto lualog = kit_state.new_table("log");
         lualog.new_enum("LOG_LEVEL",
             "INFO", log_level::LOG_LEVEL_INFO,
@@ -114,20 +112,19 @@ namespace logger {
         });
         lualog.set_function("format", [](lua_State* L) {
             cpchar vfmt = lua_to_native<cpchar>(L, 1);
-            size_t flag = lua_tointeger(L, 2);
-            int arg_num = lua_gettop(L) - 2;
+            int arg_num = lua_gettop(L) - 1;
             switch (arg_num) {
             case 0: lua_pushstring(L, vfmt); return 1;
-            case 1: return fformat(L, flag, vfmt, make_index_sequence<1>{});
-            case 2: return fformat(L, flag, vfmt, make_index_sequence<2>{});
-            case 3: return fformat(L, flag, vfmt, make_index_sequence<3>{});
-            case 4: return fformat(L, flag, vfmt, make_index_sequence<4>{});
-            case 5: return fformat(L, flag, vfmt, make_index_sequence<5>{});
-            case 6: return fformat(L, flag, vfmt, make_index_sequence<6>{});
-            case 7: return fformat(L, flag, vfmt, make_index_sequence<7>{});
-            case 8: return fformat(L, flag, vfmt, make_index_sequence<8>{});
-            case 9: return fformat(L, flag, vfmt, make_index_sequence<9>{});
-            case 10: return fformat(L, flag, vfmt, make_index_sequence<10>{});
+            case 1: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<1>{});
+            case 2: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<2>{});
+            case 3: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<3>{});
+            case 4: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<4>{});
+            case 5: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<5>{});
+            case 6: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<6>{});
+            case 7: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<7>{});
+            case 8: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<8>{});
+            case 9: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<9>{});
+            case 10: return fformat(L, LOG_FLAG_FORMAT, vfmt, make_index_sequence<10>{});
             default: luaL_error(L, "format args is more than 10!"); break;
             }
             return 0;
