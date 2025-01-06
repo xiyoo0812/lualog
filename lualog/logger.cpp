@@ -1,6 +1,10 @@
 #define LUA_LIB
 #include "logger.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 namespace logger {
     // class log_filter
     // --------------------------------------------------------------------------------
